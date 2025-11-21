@@ -44,7 +44,7 @@ Running `docker compose up` brings up the full app.
 git clone https://github.com/<your-username>/Vote-App.git
 cd Vote-App
 
-2. Build and run all services
+##2. Build and run all services
 docker compose up --build
 
 
@@ -52,7 +52,7 @@ Frontend (vote) → http://localhost:8080
 
 Result (result) → http://localhost:8081
 
-3. Network Architecture
+##3. Network Architecture
 
 Two-tier network separation:
 
@@ -62,7 +62,7 @@ backend network: worker + redis + postgres
 
 This keeps backend services isolated and secure.
 
-4. Health Checks
+##4. Health Checks
 
 redis:
 
@@ -76,18 +76,18 @@ pg_isready -U app
 
 Docker Compose waits for these services to be ready before starting dependent services.
 
-5. Seed Data (Optional)
+##5. Seed Data (Optional)
 
 Populate test/demo data:
 
 docker compose run --rm seed-data
 
-6. Exposed ports
+##6. Exposed ports
 Service	Port
 vote	8080
 Result	8081
 
-7. Stopping the App
+##7. Stopping the App
 docker compose down
 
 
