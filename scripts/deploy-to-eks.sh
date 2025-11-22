@@ -54,8 +54,14 @@ kubectl wait --for=condition=available deployment/worker -n voting-app --timeout
 # Wait for seed data
 kubectl wait --for=condition=complete job/seed-data -n voting-app --timeout=180s
 
+# Deploy HPA (NEW SECTION)
+echo "📈 Deploying Auto-scaling..."
+kubectl apply -f k8s/apps/vote/hpa.yaml
+kubectl apply -f k8s/apps/result/hpa.yaml
+
 # Deploy ingress
 kubectl apply -f k8s/ingress/alb-ingress.yaml
 
 echo "✅ Deployment completed!"
+echo "📊 HPA is now active for vote and result services"
 echo "Run: ./scripts/setup-dns.sh after 2-3 minutes"
