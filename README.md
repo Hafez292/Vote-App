@@ -83,49 +83,53 @@ Results Dashboard: http://localhost:8081
 Verify services are running:
 
 bash
-docker-compose ps
-☁️ Kubernetes Deployment
+docker-compose ps 
+```
+2.**☁️ Kubernetes Deployment**
 Infrastructure Setup
 Initialize and deploy infrastructure:
 
-bash
-cd terraform
+```bash
 terraform init
-terraform plan -var-file=dev.tfvars
-terraform apply -var-file=dev.tfvars
-Configure kubectl:
+terraform workspace new dev
+terraform workspace new prod
+terraform workspace select dev
 
-bash
-aws eks update-kubeconfig --region <region> --name <cluster-name>
-Application Deployment
+terraform plan -var="env=dev"
+terraform apply -target=module.vpc -target=module.eks
+
+aws eks update-kubeconfig --region us-east-1 --name myapp-dev
+#OR 
+aws eks update-kubeconfig \
+  --name $(terraform output -raw cluster_name) \
+  --region $(terraform output -raw region)
+# 2. Deploy only Helm charts
+
+terraform apply -target=helm_release.nginx_ingress
+
+```
+
 Deploy base components:
-
-bash
+```bash
 kubectl apply -f k8s/base/
-Deploy configurations:
-
-bash
+#Deploy configurations:
 kubectl apply -f k8s/config/
-Install dependencies:
-
-bash
+#Install dependencies:
 ./scripts/deploy-alb-controller.sh
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install redis bitnami/redis -f k8s/helm/redis-values.yaml
 helm install postgresql bitnami/postgresql -f k8s/helm/postgres-values.yaml
-Deploy applications:
-
-bash
+#Deploy applications:
 kubectl apply -f k8s/apps/
-Verify deployment:
-
-bash
+#Verify deployment:
 kubectl get all -n voting-app
+```
 🔧 Configuration
 Environment Variables
+```bash
 Create a k8s/config/secrets.yaml file with your production secrets:
-
-yaml
+```
+```yaml
 apiVersion: v1
 kind: Secret
 metadata:
@@ -137,40 +141,11 @@ data:
   redis-password: <base64-encoded-password>
 Customizing Deployment
 Edit the values files in k8s/helm/ to customize Redis and PostgreSQL configurations.
-
-🛡️ Security Features
-Non-root container execution
-
-Pod Security Admission policies
-
-Network policies for service isolation
-
-Encrypted secrets management
-
-Resource limits and requests
-
-Verify Security
-bash
-# Check pod security contexts
-kubectl get pods -n voting-app -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.securityContext.runAsUser}{"\n"}{end}'
-
+```
 # Verify network policies
 ./scripts/verify-network-policies.sh
-📊 Monitoring & Logs
-View Application Logs
-bash
-# Vote app logs
-kubectl logs -f deployment/vote -n voting-app
 
-# Result app logs  
-kubectl logs -f deployment/result -n voting-app
 
-# Worker logs
-kubectl logs -f deployment/worker -n voting-app
-Check Resource Usage
-bash
-kubectl top pods -n voting-app
-kubectl top nodes
 🔄 CI/CD Pipeline
 The project includes automated CI/CD with:
 
