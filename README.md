@@ -1,4 +1,4 @@
-# 🗳️ Vote-App: Secure, Observable, Scalable Cloud Setup
+# 🗳️ Vote-App: Secure, Observable, Scalable Cloud Setup #
 
 **Mission**: Build a Secure, Observable, Scalable Cloud Setup using a multi-service voting application.
 
