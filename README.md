@@ -1,106 +1,249 @@
-# Vote App – Phase 1: Containerization & Local Setup
+## 📋 Project Overview
 
-## Overview
+**Mission**: Build a Secure, Observable, Scalable Cloud Setup using a multi-service voting application.
 
-This is the multi-service **Voting App** from [Code Quests DevOps](https://github.com/code-quests/devops).  
+### Architecture
+┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
+│ Vote App │ │ Result App │ │ Worker │
+│ (Python) │ │ (Node.js) │ │ (.NET) │
+│ Port: 8080 │ │ Port: 8081 │ │ │
+└─────────────────┘ └─────────────────┘ └─────────────────┘
+│ │ │
+└───────────────────────┼───────────────────────┘
+│
+┌────────────┴────────────┐
+│ Ingress │
+│ (ALB Controller) │
+└────────────┬────────────┘
+│
+┌───────────────────────┼───────────────────────┐
+│ │ │
+┌────────┴────────┐ ┌───────┴───────┐ ┌────────┴────────┐
+│ Redis │ │ PostgreSQL │ │ Seed Data │
+│ (Cache) │ │ (Database) │ │ (Job) │
+└─────────────────┘ └───────────────┘ └─────────────────┘
 
-**Goal:** Run the app locally using **Docker** and **Docker Compose** with:  
+text
 
-- Containerized services  
-- Frontend/backend network separation  
-- Health checks  
-- Optional seed data  
+## 🏗️ Project Structure
+.
+├── k8s/ # Kubernetes manifests
+│ ├── apps/ # Application deployments
+│ │ ├── vote/ # Voting frontend
+│ │ ├── result/ # Results display
+│ │ ├── worker/ # Background worker
+│ │ └── seed-data/ # Database seeding job
+│ ├── base/ # Base configurations
+│ │ ├── namespace.yaml
+│ │ ├── network-policies.yaml
+│ │ └── psa.yaml # Pod Security Admission
+│ ├── config/ # Configurations & Secrets
+│ ├── helm/ # Helm values for dependencies
+│ └── ingress/ # Ingress configuration
+├── local-Setup/ # Local development
+│ ├── docker-compose.yml # Local orchestration
+│ ├── vote/ # Vote app source
+│ ├── result/ # Result app source
+│ ├── worker/ # Worker app source
+│ ├── seed-data/ # Data seeding
+│ └── healthchecks/ # Service health checks
+├── scripts/ # Deployment & setup scripts
+├── terraform/ # Infrastructure as Code
+└── README.md
 
-Running `docker compose up` brings up the full app.
+text
 
----
+## 🚀 Quick Start
 
-## Services
+### Prerequisites
 
-| Service    | Description                       | Port  | Notes                         |
-|------------|-----------------------------------|-------|-------------------------------|
-| `vote`     | Frontend to cast votes             | 8080  | Talks to `result` and `redis`|
-| `result`   | Displays vote results              | 8081  | Talks to `postgres`           |
-| `worker`   | Processes votes from queue         | n/a   | Talks to `redis` and `postgres` |
-| `seed-data`| Adds test/demo data                | n/a   | Optional, run once            |
-| `redis`    | In-memory message queue            | 6379  | Health check included         |
-| `postgres` | Database storing results           | 5432  | Health check included         |
+- Docker and Docker Compose
+- Kubernetes cluster (EKS)
+- Terraform
+- Helm
 
----
+### Local Development
 
-## Prerequisites
-
-- Docker ≥ 24  
-- Docker Compose ≥ 2  
-- Git  
-
----
-
-## Setup Instructions
-
-### 1. Clone the repository
+1. **Clone and setup the project:**
 
 ```bash
-git clone https://github.com/<your-username>/Vote-App.git
-cd Vote-App
+git clone <repository-url>
+cd devops-project
+Run locally with Docker Compose:
 
-##2. Build and run all services
-docker compose up --build
+bash
+cd local-Setup
+docker-compose up -d
+Access the application:
+
+Voting Interface: http://localhost:8080
+
+Results Dashboard: http://localhost:8081
+
+Verify services are running:
+
+bash
+docker-compose ps
+☁️ Kubernetes Deployment
+Infrastructure Setup
+Initialize and deploy infrastructure:
+
+bash
+cd terraform
+terraform init
+terraform plan -var-file=dev.tfvars
+terraform apply -var-file=dev.tfvars
+Configure kubectl:
+
+bash
+aws eks update-kubeconfig --region <region> --name <cluster-name>
+Application Deployment
+Deploy base components:
+
+bash
+kubectl apply -f k8s/base/
+Deploy configurations:
+
+bash
+kubectl apply -f k8s/config/
+Install dependencies:
+
+bash
+./scripts/deploy-alb-controller.sh
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm install redis bitnami/redis -f k8s/helm/redis-values.yaml
+helm install postgresql bitnami/postgresql -f k8s/helm/postgres-values.yaml
+Deploy applications:
+
+bash
+kubectl apply -f k8s/apps/
+Verify deployment:
+
+bash
+kubectl get all -n voting-app
+🔧 Configuration
+Environment Variables
+Create a k8s/config/secrets.yaml file with your production secrets:
+
+yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secrets
+  namespace: voting-app
+type: Opaque
+data:
+  postgres-password: <base64-encoded-password>
+  redis-password: <base64-encoded-password>
+Customizing Deployment
+Edit the values files in k8s/helm/ to customize Redis and PostgreSQL configurations.
+
+🛡️ Security Features
+Non-root container execution
+
+Pod Security Admission policies
+
+Network policies for service isolation
+
+Encrypted secrets management
+
+Resource limits and requests
+
+Verify Security
+bash
+# Check pod security contexts
+kubectl get pods -n voting-app -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.securityContext.runAsUser}{"\n"}{end}'
+
+# Verify network policies
+./scripts/verify-network-policies.sh
+📊 Monitoring & Logs
+View Application Logs
+bash
+# Vote app logs
+kubectl logs -f deployment/vote -n voting-app
+
+# Result app logs  
+kubectl logs -f deployment/result -n voting-app
+
+# Worker logs
+kubectl logs -f deployment/worker -n voting-app
+Check Resource Usage
+bash
+kubectl top pods -n voting-app
+kubectl top nodes
+🔄 CI/CD Pipeline
+The project includes automated CI/CD with:
+
+Automated image builds and security scanning
+
+Kubernetes deployment
+
+Smoke tests
+
+Infrastructure as Code validation
+
+Manual Deployment Script
+bash
+./scripts/deploy-to-eks.sh
+🚨 Troubleshooting
+Common Issues
+Pods stuck in pending state:
+
+Check resource quotas and node capacity
+
+Database connection errors:
+
+Verify network policies and secrets
+
+Check PostgreSQL readiness
+
+Ingress not working:
+
+Verify ALB controller installation
+
+Check ingress resource status
+
+Debug Commands
+bash
+# Get detailed pod information
+kubectl describe pod <pod-name> -n voting-app
+
+# Check service endpoints
+kubectl get endpoints -n voting-app
+
+# View ingress status
+kubectl get ingress -n voting-app
+
+# Check events
+kubectl get events -n voting-app --sort-by=.metadata.creationTimestamp
+📈 Scaling
+Horizontal Pod Autoscaling
+The application supports HPA. To enable:
+
+bash
+kubectl apply -f k8s/hpa/
+Manual Scaling
+bash
+kubectl scale deployment/vote --replicas=3 -n voting-app
+kubectl scale deployment/result --replicas=2 -n voting-app
+🗂️ Service Details
+Service	Port	Technology	Purpose
+vote	8080	Python/Flask	Voting interface
+result	8081	Node.js	Results display
+worker	-	.NET Core	Background processing
+Redis	6379	Redis	Caching & messaging
+PostgreSQL	5432	PostgreSQL	Data persistence
+🤝 Contributing
+Fork the repository
+
+Create a feature branch (git checkout -b feature/CodeQuest-feature)
+
+Test changes locally with Docker Compose
+
+Commit your changes (git commit -m 'Add CodeQuest-feature')
+
+Push to the branch (git push origin feature/CodeQuest-feature)
+
+Open a Pull Request
 
 
-Frontend (vote) → http://localhost:8080
-
-Result (result) → http://localhost:8081
-
-##3. Network Architecture
-
-Two-tier network separation:
-
-frontend network: vote + result
-
-backend network: worker + redis + postgres
-
-This keeps backend services isolated and secure.
-
-##4. Health Checks
-
-redis:
-
-redis-cli ping
-
-
-postgres:
-
-pg_isready -U app
-
-
-Docker Compose waits for these services to be ready before starting dependent services.
-
-##5. Seed Data (Optional)
-
-Populate test/demo data:
-
-docker compose run --rm seed-data
-
-##6. Exposed ports
-Service	Port
-vote	8080
-Result	8081
-
-##7. Stopping the App
-docker compose down
-
-
-Stops all containers and removes networks.
-
-Best Practices Implemented
-
-Non-root Docker images for security
-
-Minimal base images (alpine, python:slim)
-
-Health checks for Redis and Postgres
-
-Two-tier networks for frontend/backend isolation
-
-Optional seed service to populate test data
