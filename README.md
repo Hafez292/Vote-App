@@ -1,7 +1,7 @@
 ## 📋 Project Overview
 
 **Mission**: Build a Secure, Observable, Scalable Cloud Setup using a multi-service voting application.
-
+```text
 ### Architecture
 ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
 │ Vote App │ │ Result App │ │ Worker │
@@ -22,8 +22,9 @@
 │ Redis │ │ PostgreSQL │ │ Seed Data │
 │ (Cache) │ │ (Database) │ │ (Job) │
 └─────────────────┘ └───────────────┘ └─────────────────┘
+```
 
-text
+```text
 
 ##🏗️ Project Structure
 .
@@ -50,8 +51,7 @@ text
 ├── scripts/ # Deployment & setup scripts
 ├── terraform/ # Infrastructure as Code
 └── README.md
-
-text
+```
 
 ## 🚀 Quick Start
 
