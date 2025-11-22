@@ -1,0 +1,3 @@
+deployment_branch: main
+k8s_namespace: voting-app
+cluster_name: production-eks-cluster

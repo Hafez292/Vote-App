@@ -1,0 +1,59 @@
+name: Deploy Applications
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy-apps:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.ref == 'refs/heads/main' }}
+    
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --region ${{ secrets.AWS_REGION }} \
+            --name ${{ secrets.EKS_CLUSTER_NAME }}
+
+      - name: Update Application Images
+        run: |
+          for service in vote result worker; do
+            if [ -f "k8s/apps/$service/deployment.yaml" ]; then
+              echo "Updating image for $service..."
+              IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/$service:latest"
+              
+              # Use kubectl set image for cleaner updates
+              kubectl set image deployment/$service $service=$IMAGE -n voting-app
+            fi
+          done
+
+      - name: Apply Application Manifests
+        run: |
+          # These are idempotent - safe to run every time
+          kubectl apply -f k8s/apps/ -n voting-app
+          kubectl apply -f k8s/ingress/ -n voting-app
+
+      - name: Wait for Deployments
+        run: |
+          kubectl rollout status deployment/vote -n voting-app --timeout=300s
+          kubectl rollout status deployment/result -n voting-app --timeout=300s
+          kubectl rollout status deployment/worker -n voting-app --timeout=300s
+
+     
