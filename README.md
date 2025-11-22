@@ -25,7 +25,7 @@
 
 text
 
-## 🏗️ Project Structure
+##🏗️ Project Structure
 .
 ├── k8s/ # Kubernetes manifests
 │ ├── apps/ # Application deployments
