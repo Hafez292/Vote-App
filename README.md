@@ -106,8 +106,8 @@ The `docker-compose.yml` orchestrates all services with:
 ### 🚀 Running Locally
 
 ```bash
-# Clone the repository
-git clone <repository-url>
+# Clone the repository 
+git clone <repository-url>   # https://github.com/Hafez292/Vote-App/
 cd Vote-App
 
 # Start all services
