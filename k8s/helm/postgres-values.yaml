@@ -1,0 +1,23 @@
+global:
+  postgresql:
+    auth:
+      postgresPassword: "postgres123"
+      username: "votinguser"
+      password: "votingpass123"
+      database: "voting"
+
+primary:
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: gp2
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+
+service:
+  type: ClusterIP
