@@ -1,0 +1,79 @@
+services:
+  vote:
+    build: ./vote
+    container_name: vote
+    ports:
+      - "8080:80"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - frontend
+      - backend
+
+  result:
+    build: ./result
+    container_name: result
+    ports:
+      - "8081:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - frontend
+      - backend
+
+  worker:
+    build: ./worker
+    container_name: worker
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    networks:
+      - backend
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 15
+
+  db:
+    image: postgres:15-alpine
+    container_name: db
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: votes
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
+  seed-data:
+    build: ./seed-data
+    container_name: seed-data
+    networks:
+      - frontend
+      - backend
+    restart: "no"
+    profiles: ["seed"]
+
+networks:
+  frontend:
+  backend:
+
+volumes:
+  dbdata:
